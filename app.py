@@ -46,7 +46,7 @@ def open_help_dialog():
     st.markdown('''
         The filtering utilizes syntax from SQLite's `WHERE` clause to filter your data for display and subsequent profiling actions.
         Begin by typing conditions involving column names. If there are multiple conditions, you may chain them with `AND` or `OR`.
-        Negate conditions using `NOT`. If the column name has two or more words, enclose in `` ` ``. [SQLite WHERE Documentation](https://www.sqlitetutorial.net/sqlite-where/)
+        Negate conditions using `NOT`. [SQLite WHERE Documentation](https://www.sqlitetutorial.net/sqlite-where/)
 
         Helpful syntax:
         - `>`, `>=`, `<`, `<=`, `=`, `<>`: Comparison operators between numeric values, dates, or strings 
@@ -204,11 +204,18 @@ if uploaded_file is not None or sample_checked:
 
         st.write( '### 4. Statistical experimentation')
 
-        st.markdown('''
-                    Experiment with various hypothesis testing metrics to verify statistical significance of the differences 
-                    between various groups of data.
-        ''')
+        st.write('Experiment with various hypothesis testing metrics to verify statistical \
+                 significance of the differences between various groups of data.')
 
+        # Get categorical and 
+
+        # Columns for experiment selection
+        col1, col2 = st.columns([1,1])
+        with col1:
+            n_groups = st.drop( "****Number of groups:****", 
+                                ["2 groups",
+                                 "More than 2 groups"])
+        with col2:
 
 else:
     st.title("Welcome to Data Express!")
