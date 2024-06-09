@@ -8,6 +8,7 @@ from ydata_profiling import ProfileReport
 import openpyxl
 from pygwalker.api.streamlit import StreamlitRenderer
 from scipy import stats
+import scikit_posthocs as sp
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
@@ -333,6 +334,7 @@ if uploaded_file is not None or sample_checked:
 
                         # Test selection
                         if is_parametric:
+                            # Main test: Paired t-test
                             st.markdown('''
                                 ##### Assumptions are satisfied, performing Paired t-test
                                 $H_0$: The true mean difference is zero.
@@ -347,6 +349,7 @@ if uploaded_file is not None or sample_checked:
                                              ##### Conclusion: There is a significant difference between the two groups.')
 
                         else:
+                            # Main test: Wilcoxon Signed Rank test
                             st.markdown('''
                                 ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
                                 $H_0$: The true mean difference is zero.
@@ -371,7 +374,7 @@ if uploaded_file is not None or sample_checked:
                     var_2 = st.selectbox( "****Select interval/ratio column:****", 
                                         numerical_cols, key=4)
                 with col_3:
-                    count = st.number_input( "****Input number of samples per group:****",
+                    count = st.number_input( "****Input # samples per group:****",
                                             min_value=10, step=1, 
                                             max_value=len(new_data), value = min(100,len(new_data)))
                 
@@ -380,12 +383,12 @@ if uploaded_file is not None or sample_checked:
                     new_data.dropna(subset=[var_1,var_2],axis=0,inplace=True)
                     # Split new_data per unique categorical value
                     dfs = dict(tuple(new_data.groupby(var_1)))
-                    st.write(dfs.keys())
+                    st.write(f'Number of groups: {len(list(dfs.keys()))}')
 
                     # Sample in each subgroup
                     for column_val in list(dfs.keys()):
                         dfs[column_val] = dfs[column_val].sample(n=min(count,len(dfs[column_val])))
-                        st.write(f"{column_val} - {len(dfs[column_val])}")
+                        st.markdown(f"- {column_val} - {len(dfs[column_val])} samples")
 
                     # Assumption checks
                     is_parametric = True
@@ -395,51 +398,118 @@ if uploaded_file is not None or sample_checked:
                         $H_1$: The data is not normally distributed.
                     ''')
 
-                    # for var in [var_1, var_2]:
-                    #     pval, text = check_normality(new_data[var].to_numpy(), var)
-                    #     is_parametric = is_parametric and pval > 0.05
-                    #     st.write(text)
+                    for column_val in list(dfs.keys()):
+                        pval, text = check_normality(dfs[column_val][var_2].to_numpy(), var_2)
+                        is_parametric = is_parametric and pval > 0.05
+                        st.write(text)
 
-                    # st.write('')
-                    # st.markdown('''
-                    #     ##### Assumption check 2: Homogeneity of variance (Levene's test)
-                    #     $H_0$: The variances of the samples are the same.
-                    #     $H_1$: The variances of the samples are different.
-                    # ''')
+                    st.write('')
+                    st.markdown('''
+                        ##### Assumption check 2: Homogeneity of variance (Levene's test)
+                        $H_0$: The variances of the samples are the same.
+                        $H_1$: The variances of the samples are different.
+                    ''')
 
-                    # pval, text = check_variance_homogeneity([new_data[var_1].to_numpy(),new_data[var_2].to_numpy()])
-                    # is_parametric = is_parametric and pval > 0.05
-                    # st.write(text)
-                    # st.write('')
+                    pval, text = check_variance_homogeneity([dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())])
+                    is_parametric = is_parametric and pval > 0.05
+                    st.write(text)
+                    st.write('')
 
-                    # # Test selection
-                    # if is_parametric:
-                    #     st.markdown('''
-                    #         ##### Assumptions are satisfied, performing Paired t-test
-                    #         $H_0$: The true mean difference is zero.
-                    #         $H_1$: The true mean difference is greater or less than zero.
-                    #     ''')
-                    #     test,pvalue = stats.ttest_rel(new_data[var_1],new_data[var_2]) ##alternative default two sided
-                    #     if pvalue < 0.05:
-                    #         st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis \
-                    #                         ##### Conclusion: There is a significant difference between the two groups.')
-                    #     else:
-                    #         st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis \
-                    #                         ##### Conclusion: There is a significant difference between the two groups.')
+                    # Test selection
+                    if len(list(dfs.keys())) == 2: # Independent T test or nonparametric equivalent
+                        if is_parametric:
+                            st.markdown('''
+                                ##### Assumptions are satisfied, performing Independent t-test
+                                $H_0$: The true mean difference is zero.
+                                $H_1$: The true mean difference is greater or less than zero.
+                            ''')
+                            value_groups = [dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())]
+                            test,pvalue = stats.ttest_ind(*value_groups)                            
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis')
+                                st.markdown('##### Conclusion: There is a significant difference between the two groups.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis')
+                                st.markdown('##### Conclusion: There is no significant difference between the two groups.')
 
-                    # else:
-                    #     st.markdown('''
-                    #         ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
-                    #         $H_0$: The true mean difference is zero.
-                    #         $H_1$: The true mean difference is greater or less than zero.
-                    #     ''')
-                    #     test,pvalue = stats.wilcoxon(new_data[var_1],new_data[var_2]) ##alternative default two sided
-                    #     if pvalue < 0.05:
-                    #         st.markdown(f'- p-value: {pvalue:.10f} >> Reject null hypothesis')
-                    #         st.markdown('##### Conclusion: There is a significant difference between the two groups.')
-                    #     else:
-                    #         st.markdown(f'- p-value: {pvalue:.10f} >> Fail to reject null hypothesis')
-                    #         st.markdown('##### Conclusion: There is no significant difference between the two groups.')
+                        else:
+                            st.markdown('''
+                                ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
+                                $H_0$: The true mean difference is zero.
+                                $H_1$: The true mean difference is greater or less than zero.
+                            ''')
+                            value_groups = [dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())]
+                            test,pvalue = stats.wilcoxon(*value_groups) 
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} >> Reject null hypothesis')
+                                st.markdown('##### Conclusion: There is a significant difference between the two groups.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} >> Fail to reject null hypothesis')
+                                st.markdown('##### Conclusion: There is no significant difference between the two groups.')
+
+                    else: # ANOVA or nonparametric equivalent
+                        if is_parametric:
+
+                            # Main test: ANOVA
+                            st.markdown('''
+                                ##### Assumptions are satisfied, performing one-way ANOVA:
+                                $H_0$: The means of the groups are the same.
+                                $H_1$: At least one of the groups' means is different.
+                            ''')
+                            value_groups = [dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())]
+                            test,pvalue = stats.f_oneway(*value_groups) 
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis')
+                                st.markdown('##### Conclusion: At least one of the groups\' means are different.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis')
+                                st.markdown('##### Conclusion: There is no significant difference between the groups.')
+
+                            # Post-hoc tests
+                            st.write('')
+                            st.markdown('##### Performing pairwise independent T-test for pairwise comparison between groups ')
+                            posthoc_df = sp.posthoc_ttest(value_groups, equal_var=True, p_adjust = 'bonferroni')
+                            group_names= list(dfs.keys())
+                            posthoc_df.columns= group_names
+                            posthoc_df.index= group_names
+                            posthoc_df.style.applymap(lambda x: "background-color:violet" if x<0.05 else "background-color: white")
+
+                            st.write('The generated matrix shows the p-value results for each pairwise comparisons. \
+                                     p-values below 0.05 indicate the means for each pair of groups are significantly different.')
+                            st.dataframe(posthoc_df)
+                        
+                        else:
+                            # Main test: Keuskal-Wallis test
+                            st.markdown('''
+                                ##### Assumptions are not satisfied, performing Kruskal-Wallis test
+                                $H_0$: The means of the groups are the same.
+                                $H_1$: At least one of the sample' means is different.
+                            ''')
+                            value_groups = [dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())]
+                            test,pvalue = stats.kruskal(*value_groups) 
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis')
+                                st.markdown('##### Conclusion: At least one of the groups\' means are different.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis')
+                                st.markdown('##### Conclusion: There is no significant difference between the groups.')                            # Post-hoc tests
+                            
+                            # Post-hoc tests
+                            st.write('')
+                            st.markdown('##### Performing Mann Whitney U test for pairwise comparison between groups ')
+                            posthoc_df = sp.posthoc_mannwhitney(value_groups, p_adjust = 'bonferroni')
+                            group_names= list(dfs.keys())
+                            posthoc_df.columns= group_names
+                            posthoc_df.index= group_names
+
+                            def highlight_color(val):
+                                color = 'green' if val<0.05 else 'red'
+                                return f'background-color: {color}'
+                            posthoc_df.style.applymap(highlight_color)
+          
+                            st.write('The generated matrix shows the p-value results for each pairwise comparisons. \
+                                     p-values below 0.05 indicate the means for each pair of groups are significantly different.')
+                            st.dataframe(posthoc_df)
 
                     st.write('')
 
@@ -472,4 +542,4 @@ else:
     st.title("Welcome to Data Express!")
     st.subheader("Import a dataset (CSV/Excel) or use a sample dataset to begin exploring.")
     st.write("")
-    st.write("By Wayne Dayata | June 9, 2024")
+    st.markdown("By Wayne Dayata [(Github)](https://github.com/20100215)| June 9, 2024 ")
