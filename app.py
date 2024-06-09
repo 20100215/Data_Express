@@ -16,14 +16,11 @@ st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, l
 st.sidebar.title('📊🚀 Data Express')
 st.sidebar.subheader('Unleash your data\'s potential in minutes!')
 
-# User prompt to select file type
-ft = st.sidebar.selectbox("*Select file type*",["CSV", "Excel"])
-
 # Caching function to load data
 @st.cache_data(experimental_allow_widgets=True)
-def load_data(file_path,ft,sh,h):
+def load_data(file_path,sh,h):
     
-    if ft == 'Excel':
+    if file_path and file_path.name.endswith('.xlsx'):
         try:
             #Reading the excel file
             data = pd.read_excel(file_path,header=h,sheet_name=sh,engine='openpyxl')
@@ -31,13 +28,15 @@ def load_data(file_path,ft,sh,h):
             st.info("File is not recognised as an Excel file.")
             sys.exit()
 
-    elif ft == 'CSV':
+    elif file_path and file_path.name.endswith('.csv'):
         try:
             #Reading the csv file
             data = pd.read_csv(file_path)
         except:
             st.info("File is not recognised as a csv file.")
             sys.exit()
+    else:
+        data = pd.read_csv('adult.csv')
     
     return data
 
@@ -66,7 +65,7 @@ def open_help_dialog():
 
 
 # Creating dynamic file upload option in sidebar
-uploaded_file = st.sidebar.file_uploader("*Upload file*")
+uploaded_file = st.sidebar.file_uploader("*Upload file*", type=['csv', 'xlsx'])
 
 # Creating option to use sample dataset
 sample_checked = st.sidebar.checkbox("Load sample dataset")
@@ -76,12 +75,11 @@ if uploaded_file is not None or sample_checked:
 
     if sample_checked:
         uploaded_file = None
-        file_path = 'adult.csv'
-        ft = 'CSV'
+        file_path = None
         sh = None
         h = None
 
-    elif ft == 'Excel':
+    elif uploaded_file.name.endswith('.xlsx'):
         try:
             file_path = uploaded_file
             sample_checked = False
@@ -93,7 +91,7 @@ if uploaded_file is not None or sample_checked:
             st.info("File is not recognised as an Excel file")
             sys.exit()
     
-    elif ft == 'CSV':
+    elif uploaded_file.name.endswith('.csv'):
         try:
             file_path = uploaded_file
             sample_checked = False
@@ -103,7 +101,7 @@ if uploaded_file is not None or sample_checked:
             st.info("File is not recognised as a csv file.")
             sys.exit()
 
-    data = load_data(file_path,ft,sh,h)
+    data = load_data(file_path,sh,h)
 
     # Select which section to show
     selected = st.sidebar.radio( "****MENU****", 
