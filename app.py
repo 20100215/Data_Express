@@ -17,16 +17,48 @@ st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, l
 st.sidebar.write("****FILE UPLOAD****")
 
 # User prompt to select file type
-ft = st.sidebar.selectbox("*Select file type*",["Excel", "csv"])
+ft = st.sidebar.selectbox("*Select file type*",["CSV", "Excel"])
+
+#Caching function to load data
+@st.cache_data(experimental_allow_widgets=True)
+def load_data(file_path,ft,sh,h):
+    
+    if ft == 'Excel':
+        try:
+            #Reading the excel file
+            data = pd.read_excel(file_path,header=h,sheet_name=sh,engine='openpyxl')
+        except:
+            st.info("File is not recognised as an Excel file.")
+            sys.exit()
+
+    elif ft == 'CSV':
+        try:
+            #Reading the csv file
+            data = pd.read_csv(file_path)
+        except:
+            st.info("File is not recognised as a csv file.")
+            sys.exit()
+    
+    return data
 
 # Creating dynamic file upload option in sidebar
 uploaded_file = st.sidebar.file_uploader("*Upload file*")
 
-if uploaded_file is not None:
-    file_path = uploaded_file
+# Creating option to use sample dataset
+sample_checked = st.sidebar.checkbox("Load sample dataset")
 
-    if ft == 'Excel':
+
+if uploaded_file is not None or sample_checked:
+
+    if sample_checked:
+        file_path = 'adult.csv'
+        ft = 'CSV'
+        sh = None
+        h = None
+
+    elif ft == 'Excel':
         try:
+            file_path = uploaded_file
             # User prompt to select sheet name in uploaded Excel
             sh = st.sidebar.selectbox("*Select sheet name:*",pd.ExcelFile(file_path).sheet_names)
             # User prompt to define row with column names if they aren't in the header row in the uploaded Excel
@@ -35,36 +67,14 @@ if uploaded_file is not None:
             st.info("File is not recognised as an Excel file")
             sys.exit()
     
-    elif ft == 'csv':
+    elif ft == 'CSV':
         try:
-            #No need for sh and h for csv, set them to None
+            file_path = uploaded_file
             sh = None
             h = None
         except:
             st.info("File is not recognised as a csv file.")
             sys.exit()
-
-    #Caching function to load data
-    @st.cache_data(experimental_allow_widgets=True)
-    def load_data(file_path,ft,sh,h):
-        
-        if ft == 'Excel':
-            try:
-                #Reading the excel file
-                data = pd.read_excel(file_path,header=h,sheet_name=sh,engine='openpyxl')
-            except:
-                st.info("File is not recognised as an Excel file.")
-                sys.exit()
-    
-        elif ft == 'csv':
-            try:
-                #Reading the csv file
-                data = pd.read_csv(file_path)
-            except:
-                st.info("File is not recognised as a csv file.")
-                sys.exit()
-        
-        return data
 
     data = load_data(file_path,ft,sh,h)
 
