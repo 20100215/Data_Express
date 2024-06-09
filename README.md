@@ -11,7 +11,7 @@ A web-based interactive data analysis application supporting .csv and .xlsx file
 1. Clone the project repo by typing the following in Git Bash or Powershell:
 
 ```
-git clone __
+git clone https://github.com/20100215/Data_Express.git
 ```
 
 2. Install the requirements by typing the following in Command Prompt or Powershell:
