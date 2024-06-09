@@ -7,7 +7,7 @@ from streamlit_ydata_profiling import st_profile_report
 from ydata_profiling import ProfileReport
 import openpyxl
 from pygwalker.api.streamlit import StreamlitRenderer
-import scipy
+from scipy import stats
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
@@ -60,7 +60,7 @@ def open_help_dialog():
             the month, day, and day of week (0-Sunday to 6-Saturday) part of the date.
                 
         Example: `` score BETWEEN 50 AND 100 AND name = 'Wayne' AND strftime('%Y', `start date`) = 2024 ``: Filters for records 
-            with `score` between 50 and 100 inclusive, `name` of 'Wayne' and `start date` with the year 2024.
+            with `score` from 50 to 100, `name` of 'Wayne' and `start date` with the year 2024.
     ''')
 
 
@@ -110,7 +110,9 @@ if uploaded_file is not None or sample_checked:
                                     "Interactive visual exploration", 
                                     "Statistical experimentation"])
 
+    ## ===============================================
     ## 1. Overview of the data
+    ## ===============================================
     if selected == 'Dataset overview':
         st.write( '### 1. Dataset Preview ')
 
@@ -150,7 +152,9 @@ if uploaded_file is not None or sample_checked:
         else:
             st.write("Error: No record found!")
 
+    ## ===============================================
     ## 2. Data summarization and profiling
+    ## ===============================================
     if selected == 'Data summarization and profiling':
 
         st.write( '### 2. Data summarization and profiling')
@@ -191,7 +195,9 @@ if uploaded_file is not None or sample_checked:
         else:
             st.write("Error: No record found!")
 
+    ## ===============================================
     ## 3. PyGWalker Visualization
+    ## ===============================================
     if selected == 'Interactive visual exploration':
 
         st.write( '### 3. Interactive visual exploration')
@@ -200,7 +206,9 @@ if uploaded_file is not None or sample_checked:
         pyg_app = StreamlitRenderer(data, appearance="light")
         pyg_app.explorer()
 
-    ## 4. PyGWalker Visualization
+    ## ===============================================
+    ## 4. Statistical experimentation 
+    ## ===============================================
     if selected == 'Statistical experimentation':
 
         st.write( '### 4. Statistical experimentation')
@@ -229,6 +237,25 @@ if uploaded_file is not None or sample_checked:
         else:
             st.write("Error: No record found!")
 
+        # Prepare functions
+        def check_normality(data, colname):
+            test_stat_normality, p_value_normality=stats.normaltest(data)
+            if p_value_normality <0.05:
+                to_print = f'- p-value for {colname}: {p_value_normality:.10f} >> Reject null hypothesis (The data is not normally distributed)'
+            else:
+                to_print = f'- p-value for {colname}: {p_value_normality:.10f} >> Fail to reject null hypothesis (The data is normally distributed)'
+
+            return p_value_normality, to_print
+
+        def check_variance_homogeneity(groups):
+            test_stat_var, p_value_var= stats.levene(*groups)
+            if p_value_var <0.05:
+                to_print = f'- p-value: {p_value_var:.10f} >> Reject null hypothesis (The variances of the samples are different)'
+            else:
+                to_print = f'- p-value: {p_value_var:.10f} >> Fail to reject null hypothesis (The variances of the samples are same)'
+
+            return p_value_var, to_print
+
         # Get categorical and numeric variables
         categorical_cols =  [col for col in new_data.columns if new_data[col].nunique() <= 8]
         numerical_cols =    [col for col in new_data.select_dtypes(include=['float','int'])]
@@ -236,11 +263,12 @@ if uploaded_file is not None or sample_checked:
         if len(numerical_cols) >= 2 or (len(categorical_cols) >= 1 and len(numerical_cols) >= 1):
 
             st.write('Experiment with various hypothesis testing metrics to verify statistical \
-                 significance of the differences between various groups of data.')
+                     significance of the differences between various groups of data. \
+                     Here, the level of significance is 0.05.')
             
             st.write('Tip: If a certain categorical column is not shown, then there are too many \
                      distinct values. Use the filter to include only up to 8 desired values in a categorical column \
-                     (i.e. car brands, year values).')
+                     (i.e. car brands, year values). You may also utilize the filter to control your other variables.')
             
             # Initialize experiment options
             experiments = []
@@ -251,11 +279,11 @@ if uploaded_file is not None or sample_checked:
             if len(categorical_cols) >= 2 and len(numerical_cols) >= 1:
                 experiments.append("Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)")
 
-            experiment = st.radio("Select experiment type to perform:", experiments)
+            experiment = st.radio("****Select experiment type to perform:****", experiments)
 
             # Show columns to select
             if experiment == 'Paired samples test (requires 2 similar internal/ratio variables from all rows)':
-                col_1, col_2 = st.columns([1,1])
+                col_1, col_2, col_3 = st.columns([1,1,1])
 
                 with col_1:
                     var_1 = st.selectbox( "****Select interval/ratio column 1:****", 
@@ -263,19 +291,88 @@ if uploaded_file is not None or sample_checked:
                 with col_2:
                     var_2 = st.selectbox( "****Select interval/ratio column 2:****", 
                                         numerical_cols, key=2)
+                with col_3:
+                    count = st.number_input( "****Input number of samples:****",
+                                            min_value=10, step=1, 
+                                            max_value=len(new_data), value = min(100,len(new_data)))
                     
                 if st.button('Analyze', type='primary'):
                     # Check if repeated columns
                     if var_1 == var_2:
                         st.write('Error: The two interval/ratio columns must be different.')
+                    else:
+                        # Drop rows with NA values
+                        new_data.dropna(subset=[var_1,var_2],axis=0,inplace=True)
+                        # Sample
+                        new_data = new_data.sample(n=count)
+
+                        # Assumption checks
+                        is_parametric = True
+                        st.markdown('''
+                            ##### Assumption check 1: Normality of distribution (D'Agostino and Pearson's test)
+                            $H_0$: The data is normally distributed.
+                            $H_1$: The data is not normally distributed.
+                        ''')
+
+                        for var in [var_1, var_2]:
+                            pval, text = check_normality(new_data[var].to_numpy(), var)
+                            is_parametric = is_parametric and pval > 0.05
+                            st.write(text)
+
+                        st.write('')
+                        st.markdown('''
+                            ##### Assumption check 2: Homogeneity of variance (Levene's test)
+                            $H_0$: The variances of the samples are the same.
+                            $H_1$: The variances of the samples are different.
+                        ''')
+
+                        pval, text = check_variance_homogeneity([new_data[var_1].to_numpy(),new_data[var_2].to_numpy()])
+                        is_parametric = is_parametric and pval > 0.05
+                        st.write(text)
+                        st.write('')
+
+                        # Test selection
+                        if is_parametric:
+                            st.markdown('''
+                                ##### Assumptions are satisfied, performing Paired t-test
+                                $H_0$: The true mean difference is zero.
+                                $H_1$: The true mean difference is greater or less than zero.
+                            ''')
+                            test,pvalue = stats.ttest_rel(new_data[var_1],new_data[var_2]) ##alternative default two sided
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis \
+                                             ##### Conclusion: There is a significant difference between the two groups.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis \
+                                             ##### Conclusion: There is a significant difference between the two groups.')
+
+                        else:
+                            st.markdown('''
+                                ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
+                                $H_0$: The true mean difference is zero.
+                                $H_1$: The true mean difference is greater or less than zero.
+                            ''')
+                            test,pvalue = stats.wilcoxon(new_data[var_1],new_data[var_2]) ##alternative default two sided
+                            if pvalue < 0.05:
+                                st.markdown(f'- p-value: {pvalue:.10f} >> Reject null hypothesis')
+                                st.markdown('##### Conclusion: There is a significant difference between the two groups.')
+                            else:
+                                st.markdown(f'- p-value: {pvalue:.10f} >> Fail to reject null hypothesis')
+                                st.markdown('##### Conclusion: There is no significant difference between the two groups.')
+
+                        st.write('')
+                    
+
+
+
 
             elif experiment == 'Independent samples test (requires 1 categorical variable and 1 interval/ratio variable)':
-                col_3, col_4 = st.columns([1,1])
-                with col_3:
-                    var_3 = st.selectbox( "****Select categorical column:****", 
+                col_1, col_2, col_3 = st.columns([1,1,1])
+                with col_1:
+                    var_1 = st.selectbox( "****Select categorical column:****", 
                                         categorical_cols, key=3)
-                with col_4:
-                    var_4 = st.selectbox( "****Select interval/ratio column:****", 
+                with col_2:
+                    var_2 = st.selectbox( "****Select interval/ratio column:****", 
                                         numerical_cols, key=4)
             
             elif experiment == 'Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)':
