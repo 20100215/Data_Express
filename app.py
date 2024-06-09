@@ -76,6 +76,7 @@ sample_checked = st.sidebar.checkbox("Load sample dataset")
 if uploaded_file is not None or sample_checked:
 
     if sample_checked:
+        uploaded_file = None
         file_path = 'adult.csv'
         ft = 'CSV'
         sh = None
@@ -84,6 +85,7 @@ if uploaded_file is not None or sample_checked:
     elif ft == 'Excel':
         try:
             file_path = uploaded_file
+            sample_checked = False
             # User prompt to select sheet name in uploaded Excel
             sh = st.sidebar.selectbox("*Select sheet name:*",pd.ExcelFile(file_path).sheet_names)
             # User prompt to define row with column names if they aren't in the header row in the uploaded Excel
@@ -95,6 +97,7 @@ if uploaded_file is not None or sample_checked:
     elif ft == 'CSV':
         try:
             file_path = uploaded_file
+            sample_checked = False
             sh = None
             h = None
         except:
@@ -179,7 +182,7 @@ if uploaded_file is not None or sample_checked:
         if len(new_data) > 0:
             try:
                 # View the profiling
-                profile = ProfileReport(new_data, orange_mode=True)
+                profile = ProfileReport(new_data, orange_mode=True, explorative=True, sample=None)
                 st.markdown(f'Total rows in analysis: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
                 st_profile_report(profile, height=999999, navbar=True)  
             except:
