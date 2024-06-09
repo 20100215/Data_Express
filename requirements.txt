@@ -1,0 +1,9 @@
+streamlit
+openpyxl
+pygwalker
+pandas
+numpy
+ydata-profiling
+streamlit_ydata_reporting
+scipy
+scikit_posthocs
