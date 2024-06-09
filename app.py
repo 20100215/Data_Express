@@ -48,7 +48,7 @@ def open_help_dialog():
     st.markdown('''
         The filtering utilizes syntax from SQLite's `WHERE` clause to filter your data for display and subsequent profiling actions.
         Begin by typing conditions involving column names. If there are multiple conditions, you may chain them with `AND` or `OR`.
-        Negate conditions using `NOT`. [SQLite WHERE Documentation](https://www.sqlitetutorial.net/sqlite-where/)
+        Negate conditions using `NOT`. If the column name has two or more words, enclose in `` ` ``. [SQLite WHERE Documentation](https://www.sqlitetutorial.net/sqlite-where/)
 
         Helpful syntax:
         - `>`, `>=`, `<`, `<=`, `=`, `<>`: Comparison operators between numeric values, dates, or strings 
@@ -61,8 +61,8 @@ def open_help_dialog():
         - `strftime('%Y', datetime)` extracts and returns the year of the date. Replacing `%Y` with `%m`, `%d`, `%w` extracts 
             the month, day, and day of week (0-Sunday to 6-Saturday) part of the date.
                 
-        Example: `score BETWEEN 50 AND 100 AND name = 'Wayne' AND strftime('%Y', date) = 2024`: Filters for records 
-            with `score` between 50 and 100 inclusive, `name` of 'Wayne' and `date`s with the year 2024.
+        Example: `` score BETWEEN 50 AND 100 AND name = 'Wayne' AND strftime('%Y', `start date`) = 2024 ``: Filters for records 
+            with `score` between 50 and 100 inclusive, `name` of 'Wayne' and `start date` with the year 2024.
     ''')
 
 
