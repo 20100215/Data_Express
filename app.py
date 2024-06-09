@@ -106,34 +106,89 @@ if uploaded_file is not None or sample_checked:
     # Select which section to show
     selected = st.sidebar.radio( "****MENU****", 
                                     ["Dataset overview",
-                                    "Data Summarization and Profiling",
-                                    "Interactive Visual Exploration", 
-                                    "Statistical Experimentation"])
+                                    "Data summarization and profiling",
+                                    "Interactive visual exploration", 
+                                    "Statistical experimentation"])
 
-## 1. Overview of the data
-    st.write( '### 1. Dataset Preview ')
+    ## 1. Overview of the data
+    if selected == 'Dataset overview':
+        st.write( '### 1. Dataset Preview ')
 
-    st.write("Enter a custom filter for your dataset (Use SQLite syntax)...")
+        st.write("Enter a custom filter for your dataset (Use SQLite syntax)...")
 
-    col1, col2 = st.columns([4,1])
+        col1, col2 = st.columns([4,1])
 
-    with col1:
-        filter_text = st.text_input("filter_input", label_visibility='collapsed')
-        if filter_text:
-            new_data = sqldf('SELECT * FROM data WHERE ' + filter_text)
-            if len(new_data) == 0:
-                st.write("Error: No record found!")
-    with col2:
-        if st.button("Help", type='secondary'):
-            open_help_dialog()
+        with col1:
+            filter_text = st.text_input("filter_input", label_visibility='collapsed')
 
-    try:
-      #View the dataframe in streamlit
-      st.dataframe(new_data, use_container_width=True)
+            # Logic for filter text
+            if filter_text != '':
+                try:
+                    new_data = sqldf('SELECT * FROM data WHERE ' + filter_text)
 
-    except:
-      st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
-      sys.exit()
+                except:
+                    st.write("There is an error in your query. Click the help button for guide.")
+            else:
+                new_data = data
+
+        with col2:
+            # Button for help dialog
+            if st.button("Help", type='secondary'):
+                open_help_dialog()
+
+        # Check if there is data
+        if len(new_data) > 0:
+            try:
+                # View the dataframe in streamlit
+                st.markdown(f'Total rows in display: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
+                st.dataframe(new_data, use_container_width=True)
+            except:
+                st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
+                sys.exit()
+        else:
+            st.write("Error: No record found!")
+
+    ## 2. Data summarization and profiling
+    if selected == 'Data summarization and profiling':
+
+        st.write( '### 2. Data summarization and profiling')
+
+        st.write("Enter a custom filter for your dataset (Use SQLite syntax)...")
+
+        col1, col2 = st.columns([4,1])
+
+        with col1:
+            filter_text = st.text_input("filter_input", label_visibility='collapsed')
+
+            # Logic for filter text
+            if filter_text != '':
+                try:
+                    new_data = sqldf('SELECT * FROM data WHERE ' + filter_text)
+
+                except:
+                    st.write("There is an error in your query. Click the help button for guide.")
+            else:
+                new_data = data
+
+        with col2:
+            # Button for help dialog
+            if st.button("Help", type='secondary'):
+                open_help_dialog()
+
+        # Check if there is data
+        if len(new_data) > 0:
+            try:
+                # View the profiling
+                profile = ProfileReport(new_data, orange_mode=True)
+                st.markdown(f'Total rows in analysis: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
+                st_profile_report(profile, height=999999, navbar=True)  
+            except:
+                st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
+                sys.exit()
+        else:
+            st.write("Error: No record found!")
+
+
 
 else:
     st.title("Welcome to Data Express!")
