@@ -40,7 +40,7 @@ def load_data(file_path,sh,h):
             st.info("File is not recognised as a csv file.")
             sys.exit()
     else:
-        data = pd.read_csv('toyota.csv')
+        data = pd.read_csv('students.csv')
     
     return data
 
@@ -149,6 +149,8 @@ if uploaded_file is not None or sample_checked:
                 # View the dataframe in streamlit
                 st.markdown(f'Total rows in display: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
                 st.write('Tip: Drag the edges of the columns to increase its size. Click on a column to sort the table by its values.')
+                if sample_checked:
+                    st.markdown('See details about the dataset in [this paper](https://www.mdpi.com/2306-5729/4/3/124).')
                 st.dataframe(new_data, use_container_width=True)
             except:
                 st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
