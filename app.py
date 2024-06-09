@@ -9,6 +9,8 @@ import openpyxl
 from pygwalker.api.streamlit import StreamlitRenderer
 from scipy import stats
 import scikit_posthocs as sp
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
