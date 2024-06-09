@@ -142,6 +142,7 @@ if uploaded_file is not None or sample_checked:
             try:
                 # View the dataframe in streamlit
                 st.markdown(f'Total rows in display: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
+                st.write('Tip: Drag the edges of the columns to increase its size. Click on a column to sort the table by its values.')
                 st.dataframe(new_data, use_container_width=True)
             except:
                 st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
@@ -232,7 +233,7 @@ if uploaded_file is not None or sample_checked:
         categorical_cols =  [col for col in new_data.columns if new_data[col].nunique() <= 8]
         numerical_cols =    [col for col in new_data.select_dtypes(include=['float','int'])]
 
-        if(categorical_cols != [] and numerical_cols != []):
+        if len(numerical_cols) >= 2 or (len(categorical_cols) >= 1 and len(numerical_cols) >= 1):
 
             st.write('Experiment with various hypothesis testing metrics to verify statistical \
                  significance of the differences between various groups of data.')
@@ -240,19 +241,65 @@ if uploaded_file is not None or sample_checked:
             st.write('Tip: If a certain categorical column is not shown, then there are too many \
                      distinct values. Use the filter to include only up to 8 desired values in a categorical column \
                      (i.e. car brands, year values).')
+            
+            # Initialize experiment options
+            experiments = []
+            if len(numerical_cols) >= 2: 
+                experiments.append("Paired samples test (requires 2 similar internal/ratio variables from all rows)")
+            if len(categorical_cols) >= 1 and len(numerical_cols) >= 1:
+                experiments.append("Independent samples test (requires 1 categorical variable and 1 interval/ratio variable)")
+            if len(categorical_cols) >= 2 and len(numerical_cols) >= 1:
+                experiments.append("Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)")
 
-            # Columns for experiment selection
-            col1, col2 = st.columns([1,1])
-            with col1:
-                category = st.drop( "****Select categorical column:****", 
-                                    categorical_cols)
-            with col2:
-                metric = st.drop( "****Select metric column:****", 
-                                    categorical_cols)
+            experiment = st.radio("Select experiment type to perform:", experiments)
+
+            # Show columns to select
+            if experiment == 'Paired samples test (requires 2 similar internal/ratio variables from all rows)':
+                col_1, col_2 = st.columns([1,1])
+
+                with col_1:
+                    var_1 = st.selectbox( "****Select interval/ratio column 1:****", 
+                                        numerical_cols, key=1)
+                with col_2:
+                    var_2 = st.selectbox( "****Select interval/ratio column 2:****", 
+                                        numerical_cols, key=2)
+                    
+                if st.button('Analyze', type='primary'):
+                    # Check if repeated columns
+                    if var_1 == var_2:
+                        st.write('Error: The two interval/ratio columns must be different.')
+
+            elif experiment == 'Independent samples test (requires 1 categorical variable and 1 interval/ratio variable)':
+                col_3, col_4 = st.columns([1,1])
+                with col_3:
+                    var_3 = st.selectbox( "****Select categorical column:****", 
+                                        categorical_cols, key=3)
+                with col_4:
+                    var_4 = st.selectbox( "****Select interval/ratio column:****", 
+                                        numerical_cols, key=4)
+            
+            elif experiment == 'Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)':
+                col_5, col_6, col_7 = st.columns([1,1,1])
+                with col_5:
+                    var_5 = st.selectbox( "****Select categorical column 1:****", 
+                                        categorical_cols, key=5)
+                with col_6:
+                    var_6 = st.selectbox( "****Select categorical column 2:****", 
+                                        categorical_cols, key=6)
+                with col_7:
+                    var_7 = st.selectbox( "****Select interval/ratio column:****", 
+                                        numerical_cols, key=7)
+            
+            
+
         else:
             st.write("Error: Cannot perform statical experimentation in this dataset as it either does not contain \
                      any categorical data or does not contain any numeric data. Both kinds of data should be present \
                      for this feature.")
+        
+        
+
+        st.markdown('Read the guide for hypothesis testing [here](https://towardsdatascience.com/hypothesis-testing-with-python-step-by-step-hands-on-tutorial-with-practical-examples-e805975ea96e).')
 
 else:
     st.title("Welcome to Data Express!")
