@@ -193,7 +193,7 @@ if uploaded_file is not None or sample_checked:
 
         st.write( '### 3. Interactive visual exploration')
 
-        pyg_app = StreamlitRenderer(data)
+        pyg_app = StreamlitRenderer(data, appearance="light")
         pyg_app.explorer()
 
     ## 4. PyGWalker Visualization
