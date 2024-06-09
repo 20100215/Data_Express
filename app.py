@@ -204,9 +204,33 @@ if uploaded_file is not None or sample_checked:
 
         st.write( '### 4. Statistical experimentation')
 
+        st.write("Enter a custom filter for your dataset (Use SQLite syntax)...")
+        col1, col2 = st.columns([4,1])
+        with col1:
+            filter_text = st.text_input("filter_input", label_visibility='collapsed')
+            # Logic for filter text
+            if filter_text != '':
+                try:
+                    new_data = sqldf('SELECT * FROM data WHERE ' + filter_text)
+                except:
+                    st.write("There is an error in your query. Click the help button for guide.")
+                    new_data = data
+            else:
+                new_data = data
+        with col2:
+            # Button for help dialog
+            if st.button("Help", type='secondary'):
+                open_help_dialog()
+
+        # Check if there is data
+        if len(new_data) > 0:
+            st.markdown(f'Total rows in analysis: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
+        else:
+            st.write("Error: No record found!")
+
         # Get categorical and numeric variables
-        categorical_cols =  [col for col in data.columns if data[col].nunique() <= 8]
-        numerical_cols =    [col for col in data.select_dtypes(include=['float','int'])]
+        categorical_cols =  [col for col in new_data.columns if new_data[col].nunique() <= 8]
+        numerical_cols =    [col for col in new_data.select_dtypes(include=['float','int'])]
 
         if(categorical_cols != [] and numerical_cols != []):
 
