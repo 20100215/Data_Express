@@ -1,6 +1,10 @@
 # Data Express
 
-A web-based interactive data analysis application supporting .csv and .xlsx files with the following core features: (1) Dataset profiling with filtering options prior to displays of summary statistics, distributions per column, and relationships between columns; (2) Tableau-like visual exploration interface; (3) Statistical experimentation and hypothesis testing.
+A web-based interactive data analysis application supporting .csv and .xlsx files with the following core features: 
+
+1. Dataset profiling with filtering options prior to displays of summary statistics, distributions per column, and relationships between columns 
+2. Tableau-like visual exploration interface
+3. Statistical experimentation and hypothesis testing
 
 ## Technologies:
 
