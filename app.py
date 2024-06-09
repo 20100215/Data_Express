@@ -192,12 +192,13 @@ if uploaded_file is not None or sample_checked:
     if selected == 'Interactive visual exploration':
 
         st.write( '### 3. Interactive visual exploration')
+        st.markdown('Use the interactive interface below to experiment with different visualization. Refer to the [documentation](https://docs.kanaries.net/graphic-walker/data-viz/create-data-viz) for guide.')
 
         pyg_app = StreamlitRenderer(data, appearance="light")
         pyg_app.explorer()
 
     ## 4. PyGWalker Visualization
-    if selected == 'Statistical exprimentation':
+    if selected == 'Statistical experimentation':
 
         st.write( '### 4. Statistical experimentation')
 
