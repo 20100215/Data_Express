@@ -236,6 +236,10 @@ if uploaded_file is not None or sample_checked:
 
             st.write('Experiment with various hypothesis testing metrics to verify statistical \
                  significance of the differences between various groups of data.')
+            
+            st.write('Tip: If a certain categorical column is not shown, then there are too many \
+                     distinct values. Use the filter to include only up to 8 desired values in a categorical column \
+                     (i.e. car brands, year values).')
 
             # Columns for experiment selection
             col1, col2 = st.columns([1,1])
