@@ -6,8 +6,8 @@ import numpy as np
 from streamlit_ydata_profiling import st_profile_report
 from ydata_profiling import ProfileReport
 import openpyxl
-import pygwalker as pyg
-import pandas as pd
+from pygwalker.api.streamlit import StreamlitRenderer
+import scipy
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
@@ -183,13 +183,27 @@ if uploaded_file is not None or sample_checked:
                 # View the profiling
                 profile = ProfileReport(new_data, orange_mode=True, explorative=True, sample=None)
                 st.markdown(f'Total rows in analysis: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
-                st_profile_report(profile, height=999999, navbar=True)  
+                st_profile_report(profile, height=800, navbar=True)  
             except:
                 st.info("Error reading file. Please ensure that the input parameters are correctly defined.")
                 sys.exit()
         else:
             st.write("Error: No record found!")
 
+    ## 3. PyGWalker Visualization
+    if selected == 'Interactive visual exploration':
+
+        st.write( '### 3. Interactive visual exploration')
+
+        pyg_app = StreamlitRenderer(data)
+        pyg_app.explorer()
+
+    ## 4. PyGWalker Visualization
+    if selected == 'Statistical exprimentation':
+
+        st.write( '### 4. Statistical experimentation')
+
+        st.write('content')
 
 
 else:
