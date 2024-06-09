@@ -362,10 +362,6 @@ if uploaded_file is not None or sample_checked:
 
                         st.write('')
                     
-
-
-
-
             elif experiment == 'Independent samples test (requires 1 categorical variable and 1 interval/ratio variable)':
                 col_1, col_2, col_3 = st.columns([1,1,1])
                 with col_1:
@@ -374,6 +370,80 @@ if uploaded_file is not None or sample_checked:
                 with col_2:
                     var_2 = st.selectbox( "****Select interval/ratio column:****", 
                                         numerical_cols, key=4)
+                with col_3:
+                    count = st.number_input( "****Input number of samples per group:****",
+                                            min_value=10, step=1, 
+                                            max_value=len(new_data), value = min(100,len(new_data)))
+                
+                if st.button('Analyze', type='primary'):
+                    # Drop rows with NA values
+                    new_data.dropna(subset=[var_1,var_2],axis=0,inplace=True)
+                    # Split new_data per unique categorical value
+                    dfs = dict(tuple(new_data.groupby(var_1)))
+                    st.write(dfs.keys())
+
+                    # Sample in each subgroup
+                    for column_val in list(dfs.keys()):
+                        dfs[column_val] = dfs[column_val].sample(n=min(count,len(dfs[column_val])))
+                        st.write(f"{column_val} - {len(dfs[column_val])}")
+
+                    # Assumption checks
+                    is_parametric = True
+                    st.markdown('''
+                        ##### Assumption check 1: Normality of distribution (D'Agostino and Pearson's test)
+                        $H_0$: The data is normally distributed.
+                        $H_1$: The data is not normally distributed.
+                    ''')
+
+                    # for var in [var_1, var_2]:
+                    #     pval, text = check_normality(new_data[var].to_numpy(), var)
+                    #     is_parametric = is_parametric and pval > 0.05
+                    #     st.write(text)
+
+                    # st.write('')
+                    # st.markdown('''
+                    #     ##### Assumption check 2: Homogeneity of variance (Levene's test)
+                    #     $H_0$: The variances of the samples are the same.
+                    #     $H_1$: The variances of the samples are different.
+                    # ''')
+
+                    # pval, text = check_variance_homogeneity([new_data[var_1].to_numpy(),new_data[var_2].to_numpy()])
+                    # is_parametric = is_parametric and pval > 0.05
+                    # st.write(text)
+                    # st.write('')
+
+                    # # Test selection
+                    # if is_parametric:
+                    #     st.markdown('''
+                    #         ##### Assumptions are satisfied, performing Paired t-test
+                    #         $H_0$: The true mean difference is zero.
+                    #         $H_1$: The true mean difference is greater or less than zero.
+                    #     ''')
+                    #     test,pvalue = stats.ttest_rel(new_data[var_1],new_data[var_2]) ##alternative default two sided
+                    #     if pvalue < 0.05:
+                    #         st.markdown(f'- p-value: {pvalue:.10f} Reject null hypothesis \
+                    #                         ##### Conclusion: There is a significant difference between the two groups.')
+                    #     else:
+                    #         st.markdown(f'- p-value: {pvalue:.10f} Fail to reject null hypothesis \
+                    #                         ##### Conclusion: There is a significant difference between the two groups.')
+
+                    # else:
+                    #     st.markdown('''
+                    #         ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
+                    #         $H_0$: The true mean difference is zero.
+                    #         $H_1$: The true mean difference is greater or less than zero.
+                    #     ''')
+                    #     test,pvalue = stats.wilcoxon(new_data[var_1],new_data[var_2]) ##alternative default two sided
+                    #     if pvalue < 0.05:
+                    #         st.markdown(f'- p-value: {pvalue:.10f} >> Reject null hypothesis')
+                    #         st.markdown('##### Conclusion: There is a significant difference between the two groups.')
+                    #     else:
+                    #         st.markdown(f'- p-value: {pvalue:.10f} >> Fail to reject null hypothesis')
+                    #         st.markdown('##### Conclusion: There is no significant difference between the two groups.')
+
+                    st.write('')
+
+
             
             elif experiment == 'Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)':
                 col_5, col_6, col_7 = st.columns([1,1,1])
