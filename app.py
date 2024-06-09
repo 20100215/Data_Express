@@ -36,7 +36,7 @@ def load_data(file_path,sh,h):
             st.info("File is not recognised as a csv file.")
             sys.exit()
     else:
-        data = pd.read_csv('adult.csv')
+        data = pd.read_csv('toyota.csv')
     
     return data
 
