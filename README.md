@@ -30,3 +30,4 @@ pip install -r requirements.txt
 $ streamlit run app.py
 ```
 
+Note: The `streamlit-ydata-profiling` only supports up to Python 3.11 as of June 9, 2024

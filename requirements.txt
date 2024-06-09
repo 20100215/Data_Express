@@ -2,8 +2,9 @@ streamlit
 openpyxl
 pygwalker
 pandas
+pandasql
 numpy
 ydata-profiling
-streamlit_ydata_reporting
+streamlit-ydata-profiling
 scipy
 scikit_posthocs
