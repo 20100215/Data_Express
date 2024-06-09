@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from pandasql import sqldf
 import numpy as np
-import ydata_profiling
 from streamlit_ydata_profiling import st_profile_report
 from ydata_profiling import ProfileReport
 import openpyxl
