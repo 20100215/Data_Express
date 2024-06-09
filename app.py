@@ -137,7 +137,7 @@ if uploaded_file is not None or sample_checked:
                 open_help_dialog()
 
         # Check if there is data
-        if len(new_data) > 0:
+        if new_data and len(new_data) > 0:
             try:
                 # View the dataframe in streamlit
                 st.markdown(f'Total rows in display: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
@@ -176,7 +176,7 @@ if uploaded_file is not None or sample_checked:
                 open_help_dialog()
 
         # Check if there is data
-        if len(new_data) > 0:
+        if new_data and len(new_data) > 0:
             try:
                 # View the profiling
                 profile = ProfileReport(new_data, orange_mode=True, explorative=True, sample=None)
@@ -202,7 +202,10 @@ if uploaded_file is not None or sample_checked:
 
         st.write( '### 4. Statistical experimentation')
 
-        st.write('content')
+        st.markdown('''
+                    Experiment with various hypothesis testing metrics to verify statistical significance of the differences 
+                    between various groups of data.
+        ''')
 
 
 else:
