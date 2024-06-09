@@ -128,7 +128,7 @@ if uploaded_file is not None or sample_checked:
 
                 except:
                     st.write("There is an error in your query. Click the help button for guide.")
-                    new_data = None
+                    new_data = data
             else:
                 new_data = data
 
@@ -138,7 +138,7 @@ if uploaded_file is not None or sample_checked:
                 open_help_dialog()
 
         # Check if there is data
-        if new_data.any():
+        if len(new_data) > 0:
             try:
                 # View the dataframe in streamlit
                 st.markdown(f'Total rows in display: **{len(new_data)}** of **{len(data)}** ({round(len(new_data)/len(data)*100,2)}%)')
@@ -168,7 +168,7 @@ if uploaded_file is not None or sample_checked:
 
                 except:
                     st.write("There is an error in your query. Click the help button for guide.")
-                    new_data = None
+                    new_data = data
             else:
                 new_data = data
 
@@ -178,7 +178,7 @@ if uploaded_file is not None or sample_checked:
                 open_help_dialog()
 
         # Check if there is data
-        if new_data.any():
+        if len(new_data) > 0:
             try:
                 # View the profiling
                 profile = ProfileReport(new_data, orange_mode=True, explorative=True, sample=None)
