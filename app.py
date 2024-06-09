@@ -204,18 +204,27 @@ if uploaded_file is not None or sample_checked:
 
         st.write( '### 4. Statistical experimentation')
 
-        st.write('Experiment with various hypothesis testing metrics to verify statistical \
+        # Get categorical and numeric variables
+        categorical_cols =  [col for col in data.columns if data[col].nunique() <= 8]
+        numerical_cols =    [col for col in data.select_dtypes(include=['float','int'])]
+
+        if(categorical_cols != [] and numerical_cols != []):
+
+            st.write('Experiment with various hypothesis testing metrics to verify statistical \
                  significance of the differences between various groups of data.')
 
-        # Get categorical and 
-
-        # Columns for experiment selection
-        col1, col2 = st.columns([1,1])
-        with col1:
-            n_groups = st.drop( "****Number of groups:****", 
-                                ["2 groups",
-                                 "More than 2 groups"])
-        with col2:
+            # Columns for experiment selection
+            col1, col2 = st.columns([1,1])
+            with col1:
+                category = st.drop( "****Select categorical column:****", 
+                                    categorical_cols)
+            with col2:
+                metric = st.drop( "****Select metric column:****", 
+                                    categorical_cols)
+        else:
+            st.write("Error: Cannot perform statical experimentation in this dataset as it either does not contain \
+                     any categorical data or does not contain any numeric data. Both kinds of data should be present \
+                     for this feature.")
 
 else:
     st.title("Welcome to Data Express!")
