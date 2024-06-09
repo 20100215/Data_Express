@@ -11,6 +11,7 @@ from scipy import stats
 import scikit_posthocs as sp
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+import math
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
@@ -108,15 +109,15 @@ if uploaded_file is not None or sample_checked:
 
     # Select which section to show
     selected = st.sidebar.radio( "****MENU****", 
-                                    ["Dataset overview",
+                                    ["Dataset preview",
                                     "Data summarization and profiling",
                                     "Interactive visual exploration", 
                                     "Statistical experimentation"])
 
     ## ===============================================
-    ## 1. Overview of the data
+    ## 1. Preview of the data
     ## ===============================================
-    if selected == 'Dataset overview':
+    if selected == 'Dataset preview':
         st.write( '### 1. Dataset Preview ')
 
         st.write("Enter a custom filter for your dataset (Use SQLite syntax)...")
@@ -436,12 +437,12 @@ if uploaded_file is not None or sample_checked:
 
                         else:
                             st.markdown('''
-                                ##### Assumptions are not satisfied, performing Wilcoxon Signed Rank test
+                                ##### Assumptions are not satisfied, performing Mann Whitney U test
                                 $H_0$: The true mean difference is zero.
                                 $H_1$: The true mean difference is greater or less than zero.
                             ''')
                             value_groups = [dfs[column_val][var_2].to_numpy() for column_val in list(dfs.keys())]
-                            test,pvalue = stats.wilcoxon(*value_groups) 
+                            test,pvalue = stats.mannwhitneyu(*value_groups) 
                             if pvalue < 0.05:
                                 st.markdown(f'- p-value: {pvalue:.10f} >> Reject null hypothesis')
                                 st.markdown('##### Conclusion: There is a significant difference between the two groups.')
@@ -474,8 +475,7 @@ if uploaded_file is not None or sample_checked:
                             group_names= list(dfs.keys())
                             posthoc_df.columns= group_names
                             posthoc_df.index= group_names
-                            posthoc_df.style.applymap(lambda x: "background-color:violet" if x<0.05 else "background-color: white")
-
+                            
                             st.write('The generated matrix shows the p-value results for each pairwise comparisons. \
                                      p-values below 0.05 indicate the means for each pair of groups are significantly different.')
                             st.dataframe(posthoc_df)
@@ -503,11 +503,6 @@ if uploaded_file is not None or sample_checked:
                             group_names= list(dfs.keys())
                             posthoc_df.columns= group_names
                             posthoc_df.index= group_names
-
-                            def highlight_color(val):
-                                color = 'green' if val<0.05 else 'red'
-                                return f'background-color: {color}'
-                            posthoc_df.style.applymap(highlight_color)
           
                             st.write('The generated matrix shows the p-value results for each pairwise comparisons. \
                                      p-values below 0.05 indicate the means for each pair of groups are significantly different.')
@@ -518,25 +513,85 @@ if uploaded_file is not None or sample_checked:
 
             
             elif experiment == 'Two-way ANOVA test (requires 2 categorical variables and 1 interval/ratio variable)':
-                col_5, col_6, col_7 = st.columns([1,1,1])
-                with col_5:
-                    var_5 = st.selectbox( "****Select categorical column 1:****", 
+                col_1, col_2, col_3 = st.columns([1,1,1])
+                with col_1:
+                    var_1 = st.selectbox( "****Select categorical column 1:****", 
                                         categorical_cols, key=5)
-                with col_6:
-                    var_6 = st.selectbox( "****Select categorical column 2:****", 
+                with col_2:
+                    var_2 = st.selectbox( "****Select categorical column 2:****", 
                                         categorical_cols, key=6)
-                with col_7:
-                    var_7 = st.selectbox( "****Select interval/ratio column:****", 
+                with col_3:
+                    var_3 = st.selectbox( "****Select interval/ratio column:****", 
                                         numerical_cols, key=7)
+                    
+                
             
+                if st.button('Analyze', type='primary'):
+                    # Check if repeated columns
+                    if var_1 == var_2:
+                        st.write('Error: The two categorical columns must be different.')
+                    else:
+                        # Drop rows with NA values
+                        new_data.dropna(subset=[var_1,var_2,var_3],axis=0,inplace=True)
+                        
+                        # Count values
+                        st.markdown('##### Count of values per combination of groups:')
+                        groups_count = new_data[[var_1,var_2]].value_counts().reset_index(name='count')
+                        st.dataframe(groups_count)
+                        
+                        # Perform two way ANOVA
+                        st.markdown('##### Performing two-way ANOVA')
+                        model = ols(f'{var_3} ~ C({var_1}) + C({var_2}) + C({var_1}):C({var_2})', data=new_data).fit()
+                        anova_df = sm.stats.anova_lm(model, typ=2)
+                        st.dataframe(anova_df)
+
+                        # Interpretations
+                        if math.isnan(anova_df.iloc[0,3]):
+                            st.write(f'The p-value for {var_1} nor its significance can be determined.')
+                        if anova_df.iloc[0,3] < 0.05:
+                            st.write(f'The p-value for {var_1} is {anova_df.iloc[0,3]:.10f} (< 0.05) >> {var_1} has a statistically significant effect on {var_3}.')
+                        else:
+                            st.write(f'The p-value for {var_1} is {anova_df.iloc[0,3]:.10f} (>= 0.05) >> {var_1} has no statistically significant effect on {var_3}.')
+                        
+                        if math.isnan(anova_df.iloc[1,3]):
+                            st.write(f'The p-value for {var_2} nor its significance can be determined.')
+                        elif anova_df.iloc[1,3] < 0.05:
+                            st.write(f'The p-value for {var_2} is {anova_df.iloc[1,3]:.10f} (< 0.05) >> {var_2} has a statistically significant effect on {var_3}.')
+                        else:
+                            st.write(f'The p-value for {var_2} is {anova_df.iloc[1,3]:.10f} (>= 0.05) >> {var_2} has no statistically significant effect on {var_3}.')
+
+                        if anova_df.iloc[2,3] < 0.05:
+                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (< 0.05) >> {var_2} has a significant interaction effect between {var_1} and {var_2} on {var_3}.')
+                        else:
+                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (>= 0.05) >> {var_2} has no significant interaction effect between {var_1} and {var_2} on {var_3}.')
+
+
+                         # Post-hoc tests
+                        st.write('')
+                        st.markdown('##### Performing Mann Whitney U test for pairwise comparison between groups ')
+                        
+                        # Create df groups per combination of variables
+                        value_groups = []
+                        group_names = []
+                        for i, row in groups_count.iterrows():
+                            # Fetch names
+                            group_names.append(row[0] + ', ' + row[1])
+                            # Fetch filtered values on target column
+                            value_groups.append(new_data[(new_data[var_1] == row[0]) & (new_data[var_2] == row[1])][var_3].to_numpy())
+
+                        posthoc_df = sp.posthoc_mannwhitney(value_groups, p_adjust = 'bonferroni')
+                        posthoc_df.columns= group_names
+                        posthoc_df.index= group_names
+        
+                        st.write(f'The generated matrix shows the p-value results for each pairwise comparisons ({var_1} and {var_2}) against the target variable ({var_3}).')
+                        st.write('p-values below 0.05 indicate the means for each pair of groups are significantly different.')
+                        st.dataframe(posthoc_df)
             
 
         else:
             st.write("Error: Cannot perform statical experimentation in this dataset as it either does not contain \
                      any categorical data or does not contain any numeric data. Both kinds of data should be present \
                      for this feature.")
-        
-        
 
         st.markdown('Read the guide for hypothesis testing [here](https://towardsdatascience.com/hypothesis-testing-with-python-step-by-step-hands-on-tutorial-with-practical-examples-e805975ea96e).')
 
