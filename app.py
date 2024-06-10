@@ -563,9 +563,9 @@ if uploaded_file is not None or sample_checked:
                             st.write(f'The p-value for {var_2} is {anova_df.iloc[1,3]:.10f} (>= 0.05) >> {var_2} has no statistically significant effect on {var_3}.')
 
                         if anova_df.iloc[2,3] < 0.05:
-                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (< 0.05) >> {var_2} has a significant interaction effect between {var_1} and {var_2} on {var_3}.')
+                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (< 0.05) >> There is a significant interaction effect between {var_1} and {var_2} on {var_3}.')
                         else:
-                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (>= 0.05) >> {var_2} has no significant interaction effect between {var_1} and {var_2} on {var_3}.')
+                            st.write(f'The p-value for the interaction effect is {anova_df.iloc[2,3]:.10f} (>= 0.05) >> There is no significant interaction effect between {var_1} and {var_2} on {var_3}.')
 
 
                          # Post-hoc tests
