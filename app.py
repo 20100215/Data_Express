@@ -58,7 +58,7 @@ def open_help_dialog():
         - `column BETWEEN value1 AND value2`: Filters numeric values, dates, or strings (in alphabetical manner) 
             between `value1` and `value2` inclusive in a `column`.
         - `LIKE '%text%'`: Searches string values containg the text. Surround the text with `%` characters then with `'` characters.
-        - `column IN (value1, value2, value3)`: Filters values in a `column` that are in the list of values inside the parenthesis `()`. 
+        - `column IN (value1, value2 [, value3, ...])`: Filters values in a `column` that are in the list of values (at least two) separated by commas inside the parenthesis `()`. 
         - Dates are in the form `YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS` to match the ISO 8601 Standard.
         - `strftime('%Y', datetime)` extracts and returns the year of the date. Replacing `%Y` with `%m`, `%d`, `%w` extracts 
             the month, day, and day of week (0-Sunday to 6-Saturday) part of the date.
