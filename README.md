@@ -1,5 +1,7 @@
 # Data Express
 
+![image](https://github.com/20100215/Data_Express/assets/84717650/85bcc096-331b-4ab5-a3e3-b4385c9fefa6)
+
 A web-based interactive data analysis application supporting .csv and .xlsx files with the following core features: 
 
 1. Dataset profiling with filtering options prior to displays of summary statistics, distributions per column, and relationships between columns 
