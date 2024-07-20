@@ -624,7 +624,7 @@ if uploaded_file is not None or sample_checked:
 
         target = st.selectbox("Choose the Target", data.columns)
         if st.button("Train Model"): 
-            exp.setup(data, target=target, silent=True)
+            exp.setup(data, target=target)
             setup_df = exp.pull()
             st.write('Experiment Setup')
             st.dataframe(setup_df)
