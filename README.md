@@ -7,10 +7,11 @@ A web-based interactive data analysis application supporting .csv and .xlsx file
 1. Dataset profiling with filtering options prior to displays of summary statistics, distributions per column, and relationships between columns 
 2. Tableau-like visual exploration interface
 3. Statistical experimentation and hypothesis testing
+4. Machine learning
 
 ## Technologies:
 
-- Python, Pandas, PyGWalker, SciPy, Pinguoin, Streamlit
+- Python, Pandas, PyGWalker, SciPy, statsmodels, PyCaret, Streamlit
 
 ## Setup:
 
