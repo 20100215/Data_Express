@@ -33,4 +33,10 @@ pip install -r requirements.txt
 $ streamlit run app.py
 ```
 
+4. If you want to run the app with the automated machine learning feature:
+
+```
+$ streamlit run app_with_ML.py
+```
+
 Note: The `streamlit-ydata-profiling` only supports up to Python 3.11 as of June 9, 2024
