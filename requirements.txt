@@ -9,3 +9,4 @@ streamlit-ydata-profiling
 scipy
 scikit_posthocs
 statsmodels
+pycaret

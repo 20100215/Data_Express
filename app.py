@@ -12,6 +12,8 @@ import scikit_posthocs as sp
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 import math
+from pycaret.classification import ClassificationExperiment
+from pycaret.regression import RegressionExperiment
 
 # Setting up web app page
 st.set_page_config(page_title='Exploratory Data Analysis App', page_icon=None, layout="wide")
@@ -112,7 +114,8 @@ if uploaded_file is not None or sample_checked:
                                     ["Dataset preview",
                                     "Data summarization and profiling",
                                     "Interactive visual exploration", 
-                                    "Statistical experimentation"])
+                                    "Statistical experimentation",
+                                    "Machine Learning"])
 
     ## ===============================================
     ## 1. Preview of the data
@@ -596,6 +599,43 @@ if uploaded_file is not None or sample_checked:
                      for this feature.")
 
         st.markdown('Read the guide for hypothesis testing [here](https://towardsdatascience.com/hypothesis-testing-with-python-step-by-step-hands-on-tutorial-with-practical-examples-e805975ea96e).')
+    
+    ## ===============================================
+    ## 5. Machine Learning
+    ## ===============================================
+    if selected == 'Machine Learning':
+
+        st.write( '### 5. Machine Learning')
+        st.markdown('Quickly train a suitable model using the provided dataset. This is powered by PyCaret\'s automated machine learning capabilities ([documentation](https://pycaret.gitbook.io/docs)).')
+
+        # Get categorical and numeric variables
+        categorical_cols =  [col for col in data.columns if data[col].nunique() <= 8]
+        numerical_cols =    [col for col in data.select_dtypes(include=['float','int'])]
+
+        experiments = []
+        if categorical_cols:    experiments.append('Classification')
+        if numerical_cols:      experiments.append('Regression')
+        experiments = st.radio("****Select experiment type to perform:****", experiments)
+
+        if experiments == 'Classification':
+            exp = ClassificationExperiment()
+        if experiments == 'Regression':
+            exp = RegressionExperiment()
+
+        target = st.selectbox("Choose the Target", data.columns)
+        if st.button("Train Model"): 
+            exp.setup(data, target=target, silent=True)
+            setup_df = exp.pull()
+            st.write('Experiment Setup')
+            st.dataframe(setup_df)
+            best_model = exp.compare_models()
+            compare_df = exp.pull()
+            exp.save_model(best_model, 'best_model.pkl')
+            st.dataframe(compare_df)
+
+            if st.button("Download Model"): 
+                with open("best_model.pkl", 'rb') as f: 
+                    st.download_button("Download Model", f, "best_model_test.pkl")
 
 else:
     st.title("Welcome to Data Express!")
